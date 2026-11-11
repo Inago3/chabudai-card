@@ -382,10 +382,10 @@ GAMES.dashikiri={
   setup(names){const n=names.length,hs=n===1?8:n===2?7:6,d=shuffle(range(2,99));
     return{names,n,hs,deck:d,hands:names.map(()=>d.splice(0,hs).sort((a,b)=>a-b)),piles:[{up:true,v:1},{up:true,v:1},{up:false,v:100},{up:false,v:100}],req:[[],[],[],[]],turn:0,played:0,phase:'play',log:[],win:null}},
   legal(p,c){return p.up?(c>p.v||c===p.v-10):(c<p.v||c===p.v+10)},
-  min(gs){return gs.deck.length?2:1},
+  need(gs){return gs.deck.length?2:1},
   left(gs){return gs.deck.length+sum(gs.hands.map(h=>h.length))},
   check(gs){if(!this.left(gs)){gs.phase='over';gs.win=true;return}
-    if(gs.played<this.min(gs)&&!gs.hands[gs.turn].some(c=>gs.piles.some(p=>this.legal(p,c)))){gs.phase='over';gs.win=false}},
+    if(gs.played<this.need(gs)&&!gs.hands[gs.turn].some(c=>gs.piles.some(p=>this.legal(p,c)))){gs.phase='over';gs.win=false}},
   act(gs,s,a){
     if(gs.phase!=='play')return false;
     if(a.t==='req'){if(!(a.p>=0&&a.p<4))return false;const r=gs.req[a.p],i=r.indexOf(s);if(i>=0)r.splice(i,1);else r.push(s);return true}
@@ -394,7 +394,7 @@ GAMES.dashikiri={
       h.splice(h.indexOf(a.c),1);const back=p.up?a.c<p.v:a.c>p.v;p.v=a.c;gs.played++;
       gs.log.push(`${gs.names[s]}が${a.p+1}番の山に ${a.c}${back?'(10戻し!)':''}`);
       if(!h.length)this.endTurn(gs);else this.check(gs);return true}
-    if(a.t==='end'){if(gs.played<this.min(gs))return false;this.endTurn(gs);return true}
+    if(a.t==='end'){if(gs.played<this.need(gs))return false;this.endTurn(gs);return true}
     return false;
   },
   endTurn(gs){const h=gs.hands[gs.turn];while(h.length<gs.hs&&gs.deck.length)h.push(gs.deck.pop());h.sort((a,b)=>a-b);gs.played=0;
@@ -404,10 +404,10 @@ GAMES.dashikiri={
     if(gs.phase!=='play'||gs.turn!==s)return null;
     let best=null,bc=1e9;
     for(const c of gs.hands[s])gs.piles.forEach((p,i)=>{if(!this.legal(p,c))return;let d=p.up?c-p.v:p.v-c;if(d<0)d=-10;const cost=d+(gs.req[i].some(x=>x!==s)?6:0);if(cost<bc){bc=cost;best={t:'play',c,p:i}}});
-    if(gs.played>=this.min(gs)&&(!best||bc>3))return{t:'end'};
+    if(gs.played>=this.need(gs)&&(!best||bc>3))return{t:'end'};
     return best;
   },
-  view(gs,s){return{piles:gs.piles,req:gs.req,hand:gs.hands[s],counts:gs.hands.map(h=>h.length),turn:gs.turn,played:gs.played,min:this.min(gs),deck:gs.deck.length,left:this.left(gs),phase:gs.phase,log:gs.log.slice(-6),win:gs.win}},
+  view(gs,s){return{piles:gs.piles,req:gs.req,hand:gs.hands[s],counts:gs.hands.map(h=>h.length),turn:gs.turn,played:gs.played,min:this.need(gs),deck:gs.deck.length,left:this.left(gs),phase:gs.phase,log:gs.log.slice(-6),win:gs.win}},
   ranking(gs){return gs.names.map((n,i)=>({i,label:'なかま'}))},
   note(gs){return gs.win?'全部出し切って成功! みんなの勝ちです':`失敗… 残り${this.left(gs)}枚でした(少ないほど好成績)`},
 };
